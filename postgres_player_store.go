@@ -104,6 +104,12 @@ func (i *PostgresPlayerStore) RecordWin(name string) {
 	}
 }
 
+func (i *PostgresPlayerStore) GetLeague() []Player {
+	return nil
+}
+
+// helpers
+
 func (i *PostgresPlayerStore) resetDB() error {
 	_, err := i.db.Exec("TRUNCATE TABLE players RESTART IDENTITY")
 	return err
