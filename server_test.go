@@ -110,7 +110,7 @@ func TestLeague(t *testing.T) {
 		store := StubPlayerStore{nil, nil, wantedLeague}
 		server := NewPlayerServer(&store)
 
-		request, _ := http.NewRequest(http.MethodGet, "/league", nil)
+		request := newLeagueRequest()
 		response := httptest.NewRecorder()
 
 		server.ServeHTTP(response, request)
@@ -131,6 +131,11 @@ func newGetScoreRequest(name string) *http.Request {
 
 func newPostWinRequest(name string) *http.Request {
 	req, _ := http.NewRequest(http.MethodPost, fmt.Sprintf("/players/%s", name), nil)
+	return req
+}
+
+func newLeagueRequest() *http.Request {
+	req, _ := http.NewRequest(http.MethodGet, "/league", nil)
 	return req
 }
 
