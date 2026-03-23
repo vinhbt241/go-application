@@ -7,17 +7,37 @@ import (
 )
 
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
-	store := NewInMemoryPlayerStore()
-	server := PlayerServer{store}
-	player := "Pepper"
+	t.Run("using InMemoryPlayerStore", func(t *testing.T) {
+		store := NewInMemoryPlayerStore()
+		server := PlayerServer{store}
+		player := "Pepper"
 
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
-	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
 
-	response := httptest.NewRecorder()
-	server.ServeHTTP(response, newGetScoreRequest(player))
-	assertStatus(t, response.Code, http.StatusOK)
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newGetScoreRequest(player))
+		assertStatus(t, response.Code, http.StatusOK)
 
-	assertResponseBody(t, response.Body.String(), "3")
+		assertResponseBody(t, response.Body.String(), "3")
+	})
+
+	t.Run("using PostgresPlayerStore", func(t *testing.T) {
+		store := NewPostgresPlayerStore(true)
+		defer store.db.Close()
+
+		server := PlayerServer{store}
+		player := "Pepper"
+
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
+
+		response := httptest.NewRecorder()
+		server.ServeHTTP(response, newGetScoreRequest(player))
+		assertStatus(t, response.Code, http.StatusOK)
+
+		assertResponseBody(t, response.Body.String(), "3")
+	})
 }
