@@ -105,7 +105,30 @@ func (i *PostgresPlayerStore) RecordWin(name string) {
 }
 
 func (i *PostgresPlayerStore) GetLeague() []Player {
-	return nil
+	var league []Player
+
+	rows, err := i.db.Query("SELECT name, score FROM players")
+	if err != nil {
+		panic(err)
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var p Player
+
+		err := rows.Scan(&p.Name, &p.Wins)
+		if err != nil {
+			panic(err)
+		}
+
+		league = append(league, p)
+	}
+
+	if err := rows.Err(); err != nil {
+		panic(err)
+	}
+
+	return league
 }
 
 // helpers
