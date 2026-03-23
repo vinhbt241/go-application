@@ -9,7 +9,8 @@ import (
 func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 	t.Run("using InMemoryPlayerStore", func(t *testing.T) {
 		store := NewInMemoryPlayerStore()
-		server := PlayerServer{store}
+
+		server := NewPlayerServer(store)
 		player := "Pepper"
 
 		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -27,7 +28,7 @@ func TestRecordingWinsAndRetrievingThem(t *testing.T) {
 		store := NewPostgresPlayerStore(true)
 		defer store.db.Close()
 
-		server := PlayerServer{store}
+		server := NewPlayerServer(store)
 		player := "Pepper"
 
 		server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))

@@ -24,14 +24,14 @@ func (store *StubPlayerStore) RecordWin(name string) {
 
 // tests
 
-func TestGETPlayers(t *testing.T) {
+func TestGetPlayerScore(t *testing.T) {
 	store := StubPlayerStore{
 		scores: map[string]int{
 			"Pepper": 20,
 			"Floyd":  10,
 		},
 	}
-	server := &PlayerServer{&store}
+	server := NewPlayerServer(&store)
 
 	t.Run("return Pepper's score", func(t *testing.T) {
 		request := newGetScoreRequest("Pepper")
@@ -68,7 +68,7 @@ func TestStoreWins(t *testing.T) {
 		map[string]int{},
 		nil,
 	}
-	server := &PlayerServer{&store}
+	server := NewPlayerServer(&store)
 
 	t.Run("it records wins on POST", func(t *testing.T) {
 		player := "Pepper"
@@ -87,6 +87,20 @@ func TestStoreWins(t *testing.T) {
 		if store.winCalls[0] != player {
 			t.Errorf("did not store correct winner got %q want %q", store.winCalls[0], player)
 		}
+	})
+}
+
+func TestLeague(t *testing.T) {
+	store := StubPlayerStore{}
+	server := NewPlayerServer(&store)
+
+	t.Run("it return 200 on /league", func(t *testing.T) {
+		request, _ := http.NewRequest(http.MethodGet, "/league", nil)
+		response := httptest.NewRecorder()
+
+		server.ServeHTTP(response, request)
+
+		assertStatus(t, response.Code, http.StatusOK)
 	})
 }
 
