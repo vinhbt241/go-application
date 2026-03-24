@@ -6,26 +6,6 @@ import (
 	"testing"
 )
 
-// stubs
-type StubPlayerStore struct {
-	scores   map[string]int
-	winCalls []string
-	league   League
-}
-
-func (store *StubPlayerStore) GetPlayerScore(name string) int {
-	score := store.scores[name]
-	return score
-}
-
-func (store *StubPlayerStore) RecordWin(name string) {
-	store.winCalls = append(store.winCalls, name)
-}
-
-func (store *StubPlayerStore) GetLeague() League {
-	return store.league
-}
-
 // tests
 
 func TestGetPlayerScore(t *testing.T) {

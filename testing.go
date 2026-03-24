@@ -10,6 +10,26 @@ import (
 	"testing"
 )
 
+// stubs
+type StubPlayerStore struct {
+	scores   map[string]int
+	winCalls []string
+	league   League
+}
+
+func (store *StubPlayerStore) GetPlayerScore(name string) int {
+	score := store.scores[name]
+	return score
+}
+
+func (store *StubPlayerStore) RecordWin(name string) {
+	store.winCalls = append(store.winCalls, name)
+}
+
+func (store *StubPlayerStore) GetLeague() League {
+	return store.league
+}
+
 // asserts
 
 func assertLeague(t testing.TB, got, want League) {
@@ -57,6 +77,18 @@ func assertNoError(t testing.TB, err error) {
 
 	if err != nil {
 		t.Errorf("expect no error got %v", err)
+	}
+}
+
+func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
+	t.Helper()
+
+	if len(store.winCalls) != 1 {
+		t.Fatalf("expected a win call but didn't get any")
+	}
+
+	if store.winCalls[0] != winner {
+		t.Errorf("didn't record correct winner, got %q, want %q", store.winCalls[0], winner)
 	}
 }
 
