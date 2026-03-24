@@ -104,8 +104,8 @@ func (i *PostgresPlayerStore) RecordWin(name string) {
 	}
 }
 
-func (i *PostgresPlayerStore) GetLeague() []Player {
-	var league []Player
+func (i *PostgresPlayerStore) GetLeague() League {
+	var league League
 
 	rows, err := i.db.Query("SELECT name, score FROM players")
 	if err != nil {

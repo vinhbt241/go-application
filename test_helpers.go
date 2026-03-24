@@ -3,15 +3,17 @@ package main
 import (
 	"bytes"
 	"fmt"
+	"io"
 	"net/http"
 	"net/http/httptest"
+	"os"
 	"reflect"
 	"testing"
 )
 
 // asserts
 
-func assertLeague(t testing.TB, got, want []Player) {
+func assertLeague(t testing.TB, got, want League) {
 	t.Helper()
 
 	if !reflect.DeepEqual(got, want) {
@@ -68,7 +70,7 @@ func newLeagueRequest() *http.Request {
 	return req
 }
 
-func getLeagueFromReponse(t testing.TB, body *bytes.Buffer) (league []Player) {
+func getLeagueFromReponse(t testing.TB, body *bytes.Buffer) (league League) {
 	t.Helper()
 	league, err := NewLeague(body)
 
@@ -77,4 +79,23 @@ func getLeagueFromReponse(t testing.TB, body *bytes.Buffer) (league []Player) {
 	}
 
 	return
+}
+
+func createTempFile(t testing.TB, initialData string) (io.ReadWriteSeeker, func()) {
+	t.Helper()
+
+	tmpfile, err := os.CreateTemp("", "db")
+
+	if err != nil {
+		t.Fatalf("could not create temp file %v", err)
+	}
+
+	tmpfile.Write([]byte(initialData))
+
+	removeFile := func() {
+		tmpfile.Close()
+		os.Remove(tmpfile.Name())
+	}
+
+	return tmpfile, removeFile
 }
