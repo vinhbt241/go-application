@@ -1,6 +1,7 @@
 package main
 
 import (
+	poker "go-application"
 	"log"
 	"net/http"
 	"os"
@@ -15,8 +16,8 @@ func main() {
 		log.Fatalf("problem opening %s %v", dbFileName, err)
 	}
 
-	store, _ := NewFileSystemPlayerStore(db)
-	server := NewPlayerServer(store)
+	store, _ := poker.NewFileSystemPlayerStore(db)
+	server := poker.NewPlayerServer(store)
 
 	if err := http.ListenAndServe(":5000", server); err != nil {
 		log.Fatalf("could not listen on port 5000 %v", err)
