@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"io"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -53,6 +52,14 @@ func assertScoreEquals(t testing.TB, got, want int) {
 	}
 }
 
+func assertNoError(t testing.TB, err error) {
+	t.Helper()
+
+	if err != nil {
+		t.Errorf("expect no error got %v", err)
+	}
+}
+
 // new records
 
 func newGetScoreRequest(name string) *http.Request {
@@ -81,7 +88,7 @@ func getLeagueFromReponse(t testing.TB, body *bytes.Buffer) (league League) {
 	return
 }
 
-func createTempFile(t testing.TB, initialData string) (io.ReadWriteSeeker, func()) {
+func createTempFile(t testing.TB, initialData string) (*os.File, func()) {
 	t.Helper()
 
 	tmpfile, err := os.CreateTemp("", "db")
