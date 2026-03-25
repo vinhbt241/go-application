@@ -7,7 +7,9 @@ import (
 	"net/http/httptest"
 	"os"
 	"reflect"
+	"strings"
 	"testing"
+	"time"
 )
 
 // stubs
@@ -28,6 +30,38 @@ func (store *StubPlayerStore) RecordWin(name string) {
 
 func (store *StubPlayerStore) GetLeague() League {
 	return store.league
+}
+
+type ScheduledAlert struct {
+	At     time.Duration
+	Amount int
+}
+
+func (s ScheduledAlert) String() string {
+	return fmt.Sprintf("%d chips at %v", s.Amount, s.At)
+}
+
+type SpyBlindAlerter struct {
+	Alerts []ScheduledAlert
+}
+
+func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int) {
+	s.Alerts = append(s.Alerts, ScheduledAlert{at, amount})
+}
+
+type GameSpy struct {
+	StartedWith  int
+	FinishedWith string
+	StartCalled  bool
+}
+
+func (g *GameSpy) Start(numberOfPlayers int) {
+	g.StartedWith = numberOfPlayers
+	g.StartCalled = true
+}
+
+func (g *GameSpy) Finish(winner string) {
+	g.FinishedWith = winner
 }
 
 // asserts
@@ -80,7 +114,7 @@ func assertNoError(t testing.TB, err error) {
 	}
 }
 
-func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
+func assertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
 	t.Helper()
 
 	if len(store.winCalls) != 1 {
@@ -89,6 +123,29 @@ func AssertPlayerWin(t testing.TB, store *StubPlayerStore, winner string) {
 
 	if store.winCalls[0] != winner {
 		t.Errorf("didn't record correct winner, got %q, want %q", store.winCalls[0], winner)
+	}
+}
+
+func assertMessagesSentToUser(t testing.TB, stdout *bytes.Buffer, messages ...string) {
+	t.Helper()
+	want := strings.Join(messages, "")
+	got := stdout.String()
+	if got != want {
+		t.Errorf("got %q sent to stdout but expected %+v", got, messages)
+	}
+}
+
+func assertGameStartedWith(t testing.TB, game *GameSpy, want int) {
+	t.Helper()
+
+	if game.StartedWith != want {
+		t.Errorf("wanted Start called with %d but got %d", game.StartedWith, want)
+	}
+}
+
+func assertFinishCalledWith(t testing.TB, game *GameSpy, want string) {
+	if game.FinishedWith != want {
+		t.Errorf("wanted Finish called with %q but got %q", game.FinishedWith, want)
 	}
 }
 
@@ -119,6 +176,8 @@ func getLeagueFromReponse(t testing.TB, body *bytes.Buffer) (league League) {
 
 	return
 }
+
+// helpers
 
 func createTempFile(t testing.TB, initialData string) (*os.File, func()) {
 	t.Helper()

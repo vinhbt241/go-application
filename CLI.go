@@ -2,29 +2,46 @@ package poker
 
 import (
 	"bufio"
+	"fmt"
 	"io"
+	"strconv"
 	"strings"
-	"time"
 )
 
 type CLI struct {
-	playerStore PlayerStore
-	in          *bufio.Scanner
-	alerter     BlindAlerter
+	in   *bufio.Scanner
+	out  io.Writer
+	game Game
 }
 
-func NewCLI(store PlayerStore, io io.Reader, alerter BlindAlerter) *CLI {
+const PlayerPrompt = "Please enter the number of players: "
+const BadPlayerInputErrMsg = "Bad value received for number of players, please try again with a number"
+
+func NewCLI(in io.Reader, out io.Writer, game Game) *CLI {
 	return &CLI{
-		playerStore: store,
-		in:          bufio.NewScanner(io),
-		alerter:     alerter,
+		in:   bufio.NewScanner(in),
+		out:  out,
+		game: game,
 	}
 }
 
 func (cli *CLI) PlayPoker() {
-	cli.scheduleBlindAlerts()
-	userInput := cli.readLine()
-	cli.playerStore.RecordWin(extractWinner(userInput))
+	fmt.Fprint(cli.out, PlayerPrompt)
+
+	numberOfPlayersInput := cli.readLine()
+	numberOfPlayers, err := strconv.Atoi(strings.Trim(numberOfPlayersInput, "\n"))
+
+	if err != nil {
+		fmt.Fprint(cli.out, BadPlayerInputErrMsg)
+		return
+	}
+
+	cli.game.Start(numberOfPlayers)
+
+	winnerInput := cli.readLine()
+	winner := extractWinner(winnerInput)
+
+	cli.game.Finish(winner)
 }
 
 func extractWinner(userInput string) string {
@@ -34,13 +51,4 @@ func extractWinner(userInput string) string {
 func (cli *CLI) readLine() string {
 	cli.in.Scan()
 	return cli.in.Text()
-}
-
-func (cli *CLI) scheduleBlindAlerts() {
-	blinds := []int{100, 200, 300, 400, 500, 600, 800, 1000, 2000, 4000, 8000}
-	blindTime := 0 * time.Second
-	for _, blind := range blinds {
-		cli.alerter.ScheduleAlertAt(blindTime, blind)
-		blindTime = blindTime + 10*time.Minute
-	}
 }
