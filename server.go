@@ -4,6 +4,8 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"path/filepath"
+	"runtime"
 	"strings"
 	"text/template"
 
@@ -11,7 +13,7 @@ import (
 )
 
 const jsonContentType = "application/json"
-const htmlTemplatePath = "game.html"
+const htmlTemplateFile = "game.html"
 
 type Player struct {
 	Name string
@@ -33,6 +35,10 @@ type PlayerServer struct {
 func NewPlayerServer(store PlayerStore) (*PlayerServer, error) {
 	p := new(PlayerServer)
 
+	_, filename, _, _ := runtime.Caller(0)
+	baseDir := filepath.Dir(filename)
+
+	htmlTemplatePath := filepath.Join(baseDir, htmlTemplateFile)
 	tmpl, err := template.ParseFiles(htmlTemplatePath)
 
 	if err != nil {
