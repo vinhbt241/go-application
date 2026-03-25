@@ -15,7 +15,12 @@ import (
 	"github.com/gorilla/websocket"
 )
 
+// constants
+
+const tenMS = 10 * time.Millisecond
+
 // stubs
+
 type StubPlayerStore struct {
 	scores   map[string]int
 	winCalls []string
@@ -53,18 +58,22 @@ func (s *SpyBlindAlerter) ScheduleAlertAt(at time.Duration, amount int, to io.Wr
 }
 
 type GameSpy struct {
-	StartedWith  int
-	FinishedWith string
-	StartCalled  bool
+	StartCalled     bool
+	StartCalledWith int
+	BlindAlert      []byte
+
+	FinishedCalled   bool
+	FinishCalledWith string
 }
 
-func (g *GameSpy) Start(numberOfPlayers int, to io.Writer) {
-	g.StartedWith = numberOfPlayers
+func (g *GameSpy) Start(numberOfPlayers int, out io.Writer) {
 	g.StartCalled = true
+	g.StartCalledWith = numberOfPlayers
+	out.Write(g.BlindAlert)
 }
 
 func (g *GameSpy) Finish(winner string) {
-	g.FinishedWith = winner
+	g.FinishCalledWith = winner
 }
 
 // asserts
@@ -141,14 +150,27 @@ func assertMessagesSentToUser(t testing.TB, stdout *bytes.Buffer, messages ...st
 func assertGameStartedWith(t testing.TB, game *GameSpy, want int) {
 	t.Helper()
 
-	if game.StartedWith != want {
-		t.Errorf("wanted Start called with %d but got %d", game.StartedWith, want)
+	if game.StartCalledWith != want {
+		t.Errorf("wanted Start called with %d but got %d", game.StartCalledWith, want)
 	}
 }
 
-func assertFinishCalledWith(t testing.TB, game *GameSpy, want string) {
-	if game.FinishedWith != want {
-		t.Errorf("wanted Finish called with %q but got %q", game.FinishedWith, want)
+func assertFinishCalledWith(t testing.TB, game *GameSpy, winner string) {
+	t.Helper()
+
+	passed := retryUntil(500*time.Millisecond, func() bool {
+		return game.FinishCalledWith == winner
+	})
+
+	if !passed {
+		t.Errorf("expected finish called with %q but got %q", winner, game.FinishCalledWith)
+	}
+}
+
+func assertWebsocketGotMsg(t *testing.T, ws *websocket.Conn, want string) {
+	_, msg, _ := ws.ReadMessage()
+	if string(msg) != want {
+		t.Errorf(`got "%s", want "%s"`, string(msg), want)
 	}
 }
 
@@ -224,4 +246,31 @@ func writeWSMessage(t testing.TB, conn *websocket.Conn, message string) {
 	if err := conn.WriteMessage(websocket.TextMessage, []byte(message)); err != nil {
 		t.Fatalf("could not send message over ws connection %v", err)
 	}
+}
+
+func within(t testing.TB, d time.Duration, assert func()) {
+	t.Helper()
+
+	done := make(chan struct{}, 1)
+
+	go func() {
+		assert()
+		done <- struct{}{}
+	}()
+
+	select {
+	case <-time.After(d):
+		t.Error("timed out")
+	case <-done:
+	}
+}
+
+func retryUntil(d time.Duration, f func() bool) bool {
+	deadline := time.Now().Add(d)
+	for time.Now().Before(deadline) {
+		if f() {
+			return true
+		}
+	}
+	return false
 }
