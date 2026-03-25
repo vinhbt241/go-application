@@ -1,3 +1,5 @@
 go-application
 .env
 game.db.json
+cmd/cli/cli
+cmd/webserver/webserver
