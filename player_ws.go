@@ -11,6 +11,11 @@ type playerServerWS struct {
 	*websocket.Conn
 }
 
+var wsUpgrader = websocket.Upgrader{
+	ReadBufferSize:  1024,
+	WriteBufferSize: 1024,
+}
+
 func NewPlayerServerWS(w http.ResponseWriter, r *http.Request) *playerServerWS {
 	conn, err := wsUpgrader.Upgrade(w, r, nil)
 

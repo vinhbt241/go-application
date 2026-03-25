@@ -9,8 +9,6 @@ import (
 	"strconv"
 	"strings"
 	"text/template"
-
-	"github.com/gorilla/websocket"
 )
 
 const jsonContentType = "application/json"
@@ -97,11 +95,6 @@ func (server *PlayerServer) playersHandler(w http.ResponseWriter, r *http.Reques
 
 func (p *PlayerServer) playGame(w http.ResponseWriter, r *http.Request) {
 	p.template.Execute(w, nil)
-}
-
-var wsUpgrader = websocket.Upgrader{
-	ReadBufferSize:  1024,
-	WriteBufferSize: 1024,
 }
 
 func (p *PlayerServer) webSocket(w http.ResponseWriter, r *http.Request) {
