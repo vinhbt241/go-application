@@ -8,7 +8,7 @@ import (
 
 func TestRecordingWinsAndRetrievingThemForInMemoryStore(t *testing.T) {
 	store := NewInMemoryPlayerStore()
-	server := mustMakePlayerServer(t, store)
+	server := mustMakePlayerServer(t, store, dummygame)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -39,7 +39,7 @@ func TestRecordingWinsAndRetrievingThemForPostgresStore(t *testing.T) {
 	store := NewPostgresPlayerStore(true)
 	defer store.db.Close()
 
-	server := mustMakePlayerServer(t, store)
+	server := mustMakePlayerServer(t, store, dummygame)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
@@ -71,7 +71,7 @@ func TestRecordingWinsAndRetrievingThemForFileSystemStore(t *testing.T) {
 	defer cleanDatabase()
 	store, _ := NewFileSystemPlayerStore(database)
 
-	server := mustMakePlayerServer(t, store)
+	server := mustMakePlayerServer(t, store, dummygame)
 	player := "Pepper"
 
 	server.ServeHTTP(httptest.NewRecorder(), newPostWinRequest(player))
